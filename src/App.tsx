@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -15,7 +15,7 @@ import AdminPage from './pages/AdminPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <div className="flex min-h-screen flex-col">
           <Navbar />
@@ -36,6 +36,6 @@ export default function App() {
           <Footer />
         </div>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
