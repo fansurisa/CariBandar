@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   Search, Heart, Crown, Settings, LogOut, Star, MapPin,
-  Trash2, Calendar, Zap, ChevronRight, User,
+  Trash2, Calendar, Zap, ChevronRight, User, MessageSquare, Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { mockSuppliers, mockCategories } from '../lib/mockData';
+import { mockSuppliers, mockCategories, mockReviews } from '../lib/mockData';
 
-type Tab = 'overview' | 'favorites' | 'settings';
+type Tab = 'overview' | 'favorites' | 'reviews' | 'settings';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isSubscribed, logout, subscribe } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [favorites] = useState(mockSuppliers.slice(0, 3).map((s) => s.id));
+  // Demo: show a couple of mock reviews as "my reviews"
+  const myReviews = mockReviews.slice(0, 3);
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [phone, setPhone] = useState('');
   const [saved, setSaved] = useState(false);
@@ -31,6 +33,7 @@ export default function DashboardPage() {
   const tabs = [
     { id: 'overview' as Tab, label: 'Overview', icon: User },
     { id: 'favorites' as Tab, label: 'Favorit', icon: Heart },
+    { id: 'reviews' as Tab, label: 'Ulasan Saya', icon: MessageSquare },
     { id: 'settings' as Tab, label: 'Pengaturan', icon: Settings },
   ];
 
@@ -238,6 +241,83 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ===== REVIEWS ===== */}
+          {activeTab === 'reviews' && (
+            <div>
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-lg font-bold">Ulasan yang Pernah Kamu Tulis</h2>
+                <span className="rounded-full bg-bg px-3 py-1 text-sm font-medium text-text-secondary">
+                  {myReviews.length} ulasan
+                </span>
+              </div>
+              {myReviews.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <MessageSquare size={48} className="text-gray-300" />
+                  <p className="mt-4 text-lg font-semibold">Belum ada ulasan</p>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    Mulai berikan ulasan untuk supplier yang sudah kamu hubungi.
+                  </p>
+                  <Link to="/cari" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accent-dark">
+                    Cari Supplier
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {myReviews.map((r) => {
+                    const supplier = mockSuppliers.find((s) => s.id === r.supplier_id);
+                    return (
+                      <div key={r.id} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            {supplier && (
+                              <img src={supplier.images[0]} alt={supplier.name}
+                                className="h-12 w-12 rounded-xl object-cover shrink-0" />
+                            )}
+                            <div>
+                              <p className="font-semibold">
+                                {supplier?.name ?? 'Supplier'}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1">
+                                {[1,2,3,4,5].map((n) => (
+                                  <Star key={n} size={13}
+                                    className={n <= r.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'} />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            r.status === 'approved' ? 'bg-success/10 text-success' :
+                            r.status === 'pending'  ? 'bg-warning/10 text-warning' :
+                            'bg-error/10 text-error'
+                          }`}>
+                            {r.status === 'pending' && <Clock size={11} />}
+                            {r.status === 'approved' ? 'Ditampilkan' : r.status === 'pending' ? 'Moderasi' : 'Ditolak'}
+                          </span>
+                        </div>
+                        {r.review_text && (
+                          <p className="mt-3 text-sm text-text-secondary leading-relaxed">
+                            "{r.review_text}"
+                          </p>
+                        )}
+                        <div className="mt-3 flex items-center justify-between">
+                          <p className="text-xs text-gray-400">
+                            {new Date(r.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </p>
+                          {supplier && (
+                            <Link to={`/supplier/${supplier.slug}`}
+                              className="text-xs font-medium text-accent hover:underline">
+                              Lihat Supplier
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

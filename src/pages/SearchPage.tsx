@@ -3,14 +3,27 @@ import { Link } from 'react-router-dom';
 import { Search, MapPin, Star, Lock, SlidersHorizontal, X } from 'lucide-react';
 import { mockSuppliers, mockCategories } from '../lib/mockData';
 import { useAuth } from '../context/AuthContext';
+import { PRICE_LEVEL_LABELS, PRICE_LEVEL_ORDER, PRICE_LEVEL_COUNTS } from '../lib/types';
+import type { PriceLevel } from '../lib/types';
 
 const provinces = [...new Set(mockSuppliers.map((s) => s.location_province))];
+
+function PriceDots({ level }: { level: PriceLevel }) {
+  const count = PRICE_LEVEL_COUNTS[level];
+  return (
+    <span className="text-xs font-semibold">
+      <span className="text-amber-500">{'$'.repeat(count)}</span>
+      <span className="text-amber-200">{'$'.repeat(5 - count)}</span>
+    </span>
+  );
+}
 
 export default function SearchPage() {
   const { isAuthenticated, isSubscribed } = useAuth();
   const [query, setQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedPriceLevel, setSelectedPriceLevel] = useState<PriceLevel | ''>('');
   const [showFilters, setShowFilters] = useState(false);
   const FREE_LIMIT = 5;
 
@@ -26,9 +39,11 @@ export default function SearchPage() {
         s.category_ids.some((cid) => selectedCategories.includes(cid));
       const matchesProvince =
         !selectedProvince || s.location_province === selectedProvince;
-      return matchesQuery && matchesCategory && matchesProvince;
+      const matchesPrice =
+        !selectedPriceLevel || s.price_level === selectedPriceLevel;
+      return matchesQuery && matchesCategory && matchesProvince && matchesPrice;
     });
-  }, [query, selectedCategories, selectedProvince]);
+  }, [query, selectedCategories, selectedProvince, selectedPriceLevel]);
 
   const canSeeAll = isAuthenticated && isSubscribed;
   const visibleSuppliers = canSeeAll ? filtered : filtered.slice(0, FREE_LIMIT);
@@ -44,6 +59,7 @@ export default function SearchPage() {
     setQuery('');
     setSelectedCategories([]);
     setSelectedProvince('');
+    setSelectedPriceLevel('');
   };
 
   const getCategoryName = (id: string) =>
@@ -111,7 +127,27 @@ export default function SearchPage() {
                   ))}
                 </select>
               </div>
-              {(selectedCategories.length > 0 || selectedProvince) && (
+              <div>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text-secondary">
+                  Kisaran Harga
+                </h3>
+                <div className="space-y-2">
+                  {PRICE_LEVEL_ORDER.map((level) => (
+                    <label key={level} className="flex items-center gap-2.5 cursor-pointer text-sm">
+                      <input
+                        type="radio"
+                        name="priceLevel"
+                        checked={selectedPriceLevel === level}
+                        onChange={() => setSelectedPriceLevel(selectedPriceLevel === level ? '' : level)}
+                        className="accent-accent"
+                      />
+                      <PriceDots level={level} />
+                      <span>{PRICE_LEVEL_LABELS[level]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {(selectedCategories.length > 0 || selectedProvince || selectedPriceLevel) && (
                 <button
                   onClick={clearFilters}
                   className="inline-flex items-center gap-1 text-sm font-medium text-error hover:underline"
@@ -204,8 +240,11 @@ export default function SearchPage() {
                       </span>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold line-clamp-1">{s.name}</h3>
-                      <div className="mt-2 flex items-center gap-3 text-sm text-text-secondary">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <h3 className="font-bold line-clamp-1 flex-1">{s.name}</h3>
+                        <PriceDots level={s.price_level} />
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-text-secondary">
                         <span className="inline-flex items-center gap-1">
                           <MapPin size={14} className="text-accent" />
                           {s.location_city}
@@ -213,6 +252,7 @@ export default function SearchPage() {
                         <span className="inline-flex items-center gap-1">
                           <Star size={14} className="fill-amber-400 text-amber-400" />
                           {s.rating}
+                          <span className="text-xs">({s.review_count})</span>
                         </span>
                       </div>
                       <p className="mt-2 text-sm text-text-secondary line-clamp-2">

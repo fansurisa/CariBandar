@@ -323,9 +323,15 @@ export default function LandingPage() {
 
                 {/* Body */}
                 <div className="p-5">
-                  <h3 className="text-lg font-bold leading-snug line-clamp-1">
-                    {s.name}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-lg font-bold leading-snug line-clamp-1 flex-1">
+                      {s.name}
+                    </h3>
+                    <span className="shrink-0 text-xs font-semibold">
+                      <span className="text-amber-500">{'$'.repeat({'budget':1,'affordable':2,'midrange':3,'premium':4,'luxury':5}[s.price_level] ?? 2)}</span>
+                      <span className="text-amber-200">{'$'.repeat(5 - ({'budget':1,'affordable':2,'midrange':3,'premium':4,'luxury':5}[s.price_level] ?? 2))}</span>
+                    </span>
+                  </div>
 
                   <div className="mt-2 flex items-center gap-3 text-sm text-text-secondary">
                     <span className="inline-flex items-center gap-1">
